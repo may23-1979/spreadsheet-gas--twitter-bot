@@ -73,6 +73,7 @@ function authCallback(request) {
 }
 
 // Googleスプレッドシートからツイートする内容を取得する
+// カスタマイズ
 function pickUpTweet() {
   var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("シート1"); // シート名
   if (targetSheet.getLastRow() == 1) { return "" } // シートにデータが無い
