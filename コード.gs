@@ -77,21 +77,39 @@ function authCallback(request) {
 function pickUpTweet() {
   var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("シート1"); // シート名
   if (targetSheet.getLastRow() == 1) { return "" } // シートにデータが無い
-  var cells = targetSheet.getRange(2, 1, targetSheet.getLastRow() - 1, 3).getValues(); // ツイートのリストを格納
-  var grossWeight = 0;
-  for (var i = 0; i < cells.length; i++ ) { // ウェイトの合計値を算出
-    grossWeight += cells[i][1];
-  }
-  if (grossWeight == 0) { return ""; } // ウェイト総数がゼロ
-  var targetWeight = grossWeight * Math.random(); // ウェイト合計値を最大値としてランダムでターゲットの数値を生成
+  var targetCells = targetSheet.getRange(2, 1, targetSheet.getLastRow() - 1, 4);
+  Logger.log(JSON.stringify(targetCells, null, 2));
+
+  var cells = targetCells.getValues(); // ツイートのリストを格納
 
   var tweetText = "";
+  var tweetCount = 0;
+  var previousCount = cells[0][2]; 
+  var lastCount = cells[cells.length-1][2];
+Logger.log("previousCount:" + previousCount + ", lastCount:" + lastCount);
+  if ( isNaN(previousCount) || previousCount == 0 || previousCount == lastCount) {
+    
+    // 投稿回数を更新
+    targetCells.getCell(1,3).setValue(cells[0][2]+1);
+    // 投稿日時
+    targetCells.getCell(1,4).setValue(Utilities.formatDate((new Date()), 'Asia/Tokyo', 'yyyy/MM/dd hh:mm:ss'))
+    return cells[0][0];
+  }
+
   for (var i = 0, il = cells.length; i < il; i++ ) {
-    targetWeight -= cells[i][1]; // セルに記入されたウェイトの値を減算
-    if (targetWeight < 0) { // ターゲットの数値がマイナスになったらそのセルの内容を返す
-      tweetText = cells[i][0];
+    tweetText = cells[i][0];
+    tweetCount = cells[i][2];
+    if (isNaN(tweetCount)) { tweetCount = 0; }
+    Logger.log("previousCount:" + previousCount);
+    if ( tweetCount == 0 || ( previousCount != tweetCount) ) {
+      Logger.log("tweetCount:" + tweetCount);
+      // 投稿回数を更新
+      targetCells.getCell(i+1,3).setValue(tweetCount+1)
+      // 投稿日時
+      targetCells.getCell(i+1,4).setValue(Utilities.formatDate((new Date()), 'Asia/Tokyo', 'yyyy/MM/dd hh:mm:ss'))
       break;
     }
+    previousCount = tweetCount;
   }
   return tweetText;
 }
