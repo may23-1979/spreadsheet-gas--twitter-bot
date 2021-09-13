@@ -11,24 +11,40 @@
 function run() {
   var service = getService();
   Logger.log(service.getCallbackUrl());
-  var tweet = pickUpTweet(); // ツイートの内容を取得
-  if (tweet == '') {
+  var targetCulumn = pickUpTweet(); // ツイートの内容を取得
+  var tweetText = targetCulumn.getCell(1,1).getValue();
+  var tweetCount = targetCulumn.getCell(1,4);
+  Logger.log("tweetText :" + tweetText );
+
+  if (tweetText == '') {
     Logger.log('Tweetが選択できませんでした');
     return false; // 終了
   }
-  Logger.log('Tweet Selected : '+tweet);
+  // タイトル(ハッシュタグ)を取得
+  tweetText += "\n" + getTweetTitle();
+  Logger.log('tweetText:' + tweetText);
 
   if (service.hasAccess()) {
     var url = 'https://api.twitter.com/1.1/statuses/update.json';
     var payload = {
-      status: tweet
+      status: tweetText
     };
+/*
     var response = service.fetch(url, {
       method: 'post',
       payload: payload
     });
     var result = JSON.parse(response.getContentText());
     Logger.log(JSON.stringify(result, null, 2));
+*/
+    Logger.log("成功");
+    // TODO: 投稿回数をインクリメント
+    Logger.log("tweetCount:" + tweetCount.getValue());
+    // 投稿回数を更新
+    tweetCount.setValue(tweetCount.getValue()+1);
+    // 投稿日時
+    targetCulumn.getCell(1,5).setValue(Utilities.formatDate((new Date()), 'Asia/Tokyo', 'yyyy/MM/dd hh:mm:ss'));
+
   } else {
     var authorizationUrl = service.authorize();
     Logger.log('URLを確認してください: %s',
@@ -73,43 +89,41 @@ function authCallback(request) {
 }
 
 // Googleスプレッドシートからツイートする内容を取得する
-// カスタマイズ
 function pickUpTweet() {
   var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("シート1"); // シート名
-  if (targetSheet.getLastRow() == 1) { return "" } // シートにデータが無い
-  var targetCells = targetSheet.getRange(2, 1, targetSheet.getLastRow() - 1, 4);
+  if (targetSheet.getLastRow() == 1) { return [] } // シートにデータが無い
+  var targetCells = targetSheet.getRange(2, 1, targetSheet.getLastRow() - 1, 5);
   Logger.log(JSON.stringify(targetCells, null, 2));
 
   var cells = targetCells.getValues(); // ツイートのリストを格納
 
-  var tweetText = "";
   var tweetCount = 0;
-  var previousCount = cells[0][2]; 
-  var lastCount = cells[cells.length-1][2];
+  var previousCount = cells[0][3];
+  var lastCount = cells[cells.length-1][3];
 Logger.log("previousCount:" + previousCount + ", lastCount:" + lastCount);
-  if ( isNaN(previousCount) || previousCount == 0 || previousCount == lastCount) {
-    
-    // 投稿回数を更新
-    targetCells.getCell(1,3).setValue(cells[0][2]+1);
-    // 投稿日時
-    targetCells.getCell(1,4).setValue(Utilities.formatDate((new Date()), 'Asia/Tokyo', 'yyyy/MM/dd hh:mm:ss'))
-    return cells[0][0];
+  if ( isNaN(previousCount) || previousCount == 0 || previousCount == lastCount) {   
+Logger.log("pickUpTweet() > 1行目をリターン");
+    return targetSheet.getRange(2,1, 2,5);
   }
 
   for (var i = 0, il = cells.length; i < il; i++ ) {
-    tweetText = cells[i][0];
-    tweetCount = cells[i][2];
+    tweetCount = cells[i][3];
     if (isNaN(tweetCount)) { tweetCount = 0; }
     Logger.log("previousCount:" + previousCount);
     if ( tweetCount == 0 || ( previousCount != tweetCount) ) {
-      Logger.log("tweetCount:" + tweetCount);
-      // 投稿回数を更新
-      targetCells.getCell(i+1,3).setValue(tweetCount+1)
-      // 投稿日時
-      targetCells.getCell(i+1,4).setValue(Utilities.formatDate((new Date()), 'Asia/Tokyo', 'yyyy/MM/dd hh:mm:ss'))
-      break;
+      Logger.log("pickUpTweet() > i+2行目をリターン, i:" + i);
+      return targetSheet.getRange(i+2,1, i+2,5);
     }
     previousCount = tweetCount;
   }
-  return tweetText;
+  return targetSheet.getRange(i+2,1, i+2,5);
 }
+
+// Googleスプレッドシートからツイートする内容を取得する
+function getTweetTitle() {
+  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("基本情報"); // シート名
+  if (targetSheet.getLastRow() == 1) { return "" } // シートにデータが無い
+  var targetCells = targetSheet.getRange(2, 1);
+  return targetCells.getValue();
+}
+
