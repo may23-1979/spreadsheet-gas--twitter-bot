@@ -7,6 +7,9 @@
  * CONSUMER_KEY, TOKEN, CONSUMER_SECRET, TOKEN_SECRET
  */
 
+const SHEET_NAME_TITLE = "基本情報";
+const SHEET_NAME_TWEET = "シート-テスト用";
+
 // Twitter APIの認証とレスポンス取得
 function run() {
   var service = getService();
@@ -38,7 +41,7 @@ function run() {
     Logger.log(JSON.stringify(result, null, 2));
 */
     Logger.log("成功");
-    // TODO: 投稿回数をインクリメント
+    // 投稿回数をインクリメント
     Logger.log("tweetCount:" + tweetCount.getValue());
     // 投稿回数を更新
     tweetCount.setValue(tweetCount.getValue()+1);
@@ -90,7 +93,7 @@ function authCallback(request) {
 
 // Googleスプレッドシートからツイートする内容を取得する
 function pickUpTweet() {
-  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("シート1"); // シート名
+  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME_TWEET); // シート名
   if (targetSheet.getLastRow() == 1) { return [] } // シートにデータが無い
   var targetCells = targetSheet.getRange(2, 1, targetSheet.getLastRow() - 1, 5);
   Logger.log(JSON.stringify(targetCells, null, 2));
@@ -121,7 +124,7 @@ Logger.log("pickUpTweet() > 1行目をリターン");
 
 // Googleスプレッドシートからツイートする内容を取得する
 function getTweetTitle() {
-  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("基本情報"); // シート名
+  var targetSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME_TITLE); // シート名
   if (targetSheet.getLastRow() == 1) { return "" } // シートにデータが無い
   var targetCells = targetSheet.getRange(2, 1);
   return targetCells.getValue();
