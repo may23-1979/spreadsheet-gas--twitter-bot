@@ -17,7 +17,6 @@ function run() {
   var targetCulumn = pickUpTweet(); // ツイートの内容を取得
   var tweetText = targetCulumn.getCell(1,1).getValue();
   var tweetCount = targetCulumn.getCell(1,4);
-  Logger.log("tweetText :" + tweetText );
 
   if (tweetText == '') {
     Logger.log('Tweetが選択できませんでした');
@@ -32,21 +31,27 @@ function run() {
     var payload = {
       status: tweetText
     };
-/*
-    var response = service.fetch(url, {
-      method: 'post',
-      payload: payload
-    });
-    var result = JSON.parse(response.getContentText());
-    Logger.log(JSON.stringify(result, null, 2));
-*/
-    Logger.log("成功");
-    // 投稿回数をインクリメント
-    Logger.log("tweetCount:" + tweetCount.getValue());
-    // 投稿回数を更新
-    tweetCount.setValue(tweetCount.getValue()+1);
-    // 投稿日時
-    targetCulumn.getCell(1,5).setValue(Utilities.formatDate((new Date()), 'Asia/Tokyo', 'yyyy/MM/dd hh:mm:ss'));
+
+    try {
+      var response = service.fetch(url, {
+        method: 'post',
+        payload: payload
+      });
+      var result = JSON.parse(response.getContentText());
+      Logger.log(JSON.stringify(result, null, 2));
+      Logger.log("Tweet成功");
+
+      // 投稿回数を更新
+      tweetCount.setValue(tweetCount.getValue()+1);
+      // 投稿日時
+      targetCulumn.getCell(1,5).setValue(Utilities.formatDate((new Date()), 'Asia/Tokyo', 'yyyy/MM/dd hh:mm:ss'));
+    } catch(error) {
+      Logger.log("失敗");
+      console.error(getErrorInfo(error));
+      
+      // http://westplain.sakuraweb.com/translate/twitter/API-Overview/Error-Codes-and-Responses.cgi
+      targetCulumn.getCell(1,5).setValue("投稿失敗\n" + error.message);
+    }
 
   } else {
     var authorizationUrl = service.authorize();
@@ -103,9 +108,9 @@ function pickUpTweet() {
   var tweetCount = 0;
   var previousCount = cells[0][3];
   var lastCount = cells[cells.length-1][3];
-Logger.log("previousCount:" + previousCount + ", lastCount:" + lastCount);
+  Logger.log("previousCount:" + previousCount + ", lastCount:" + lastCount);
   if ( isNaN(previousCount) || previousCount == 0 || previousCount == lastCount) {   
-Logger.log("pickUpTweet() > 1行目をリターン");
+    Logger.log("pickUpTweet() > 1行目をリターン");
     return targetSheet.getRange(2,1, 2,5);
   }
 
@@ -130,3 +135,10 @@ function getTweetTitle() {
   return targetCells.getValue();
 }
 
+function getErrorInfo(error){
+  var errorInfo = "[名前] " + error.name + "\n" +
+         "[場所] " + error.fileName + "(" + error.lineNumber + "行目)\n" +
+         "[メッセージ]" + error.message + "\n" +      
+         "[StackTrace]\n" + error.stack;
+  return errorInfo;
+}
