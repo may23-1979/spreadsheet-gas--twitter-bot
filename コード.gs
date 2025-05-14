@@ -1,3 +1,10 @@
+
+// GitHubの　セキュリティーチェックツールテスト用
+git_access_token = 'ghp_rSZXFRGXXXSSTTTEEEEEEAw';
+AWSKE1 = "xxxxxyyyyyzzzz";
+AWSKE2 = "xxxxxyyyyyzzzz22222";
+
+
 /**
  * スプレッドシートからTweetに投稿するBOTプログラム
  * 下記サイトを参考にしています。
@@ -6,6 +13,7 @@
  * TODO: secret.gs で、各種キーを設定してください。
  * CONSUMER_KEY, TOKEN, CONSUMER_SECRET, TOKEN_SECRET
  */
+
 
 // Twitter APIの認証とレスポンス取得
 function run() {
